@@ -183,6 +183,34 @@ def save_page(session: requests.Session, title: str, url: str, url_map: Dict[str
     for tag in content_div(['script', 'style', 'iframe', 'form', 'input', 'button']): # type: ignore
         tag.decompose()
 
+    # 画像/メディアのダウンロード処理
+    attachments_dir = os.path.join(config.OUTPUT_DIR, "attachments")
+    if not os.path.exists(attachments_dir):
+        os.makedirs(attachments_dir)
+
+    for img_tag in content_div.find_all('img'):
+        src = img_tag.get('src')
+        if not src:
+           continue
+
+        # URLの正規化
+        if src.startswith('//'):
+            media_url = f"https:{src}"
+        elif src.startswith('/'):
+            media_url = f"https://seesaawiki.jp{src}"
+        elif not src.startswith('http'):
+            # 相対パス等の場合、元のWikiのドメインに合わせるなど調整が必要だが
+            # ここでは一旦無視するか、単純結合する
+            media_url = f"{config.BASE_URL.rstrip('/')}/{src.lstrip('/')}"
+        else:
+            media_url = src
+
+        filename = utils.download_media(session, media_url, attachments_dir)
+        if filename:
+            # Markdown上のパスは attachments/filename とする
+            img_tag['src'] = f"attachments/{filename}"
+
+
     markdown_text = md(str(content_div), heading_style="atx")
     markdown_text = convert_internal_links(markdown_text, url_map)
     markdown_text = utils.clean_markdown(markdown_text)

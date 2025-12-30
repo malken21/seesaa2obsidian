@@ -6,7 +6,7 @@ services:
       - ./output:/app/output
     environment:
       # ここに対象のWiki URLを設定
-      - BASE_URL=https://seesaawiki.jp/w/staff_wiki/
+      - BASE_URL=https://seesaawiki.jp/toro_server/
 
       # 出力先のディレクトリ
       - OUTPUT_DIR=output
